@@ -46,7 +46,7 @@ from pygame.sprite import collide_rect
 SCREEN_WIDTH = 1250
 SCREEN_HEIGHT = 700
 QTY_PLAYERS = 4
-QTY_GIFTS = 16
+QTY_GIFTS = 32
 
 KEY_SET_1 = {"up": K_w, "left": K_a, "down": K_s, "right": K_d}
 KEY_SET_2 = {"up": K_u, "left": K_h, "down": K_j, "right": K_k}
@@ -58,7 +58,7 @@ DOUG = ".\images\\50Doug.jpg"
 JAMES = ".\images\\50James.jpg"
 KATHLEEN = ".\images\\50Kathleen.jpg"
 IAN = ".\images\\50Ian.jpg"
-EVELYN = ".\images\\50Evelyn.jpg"
+EVELYN = ".\images\\50Jack.jpg"
 
 # starting zones so character don't start off overlapping or really close to each other
 ZONE_1 = (
@@ -142,7 +142,7 @@ class Gift(pygame.sprite.Sprite):
 
     def __init__(self):
         super(Gift, self).__init__()
-        self.surf = pygame.image.load(".\images\\25gift.png").convert()
+        self.surf = pygame.image.load(".\images\\50gift.jpg").convert()
         self.surf.set_colorkey((0,0,0), RLEACCEL)
 
         # place gift in random location
@@ -154,7 +154,9 @@ class Gift(pygame.sprite.Sprite):
         )
 
         pygame.sprite.spritecollide(self, allGifts, True)        # need to get rid of any overlapping gifts
-        pygame.sprite.spritecollide(self, allPlayers, True)        # need to get rid of any overlapping gifts
+        
+        if pygame.sprite.spritecollide(self, allPlayers, False):        # need to kill self if overlap with Player
+            self.kill
 
     def update(self):
         # pygame.sprite.spritecollide(self, self.otherPlayers, True)        # disappear if collected by player
@@ -194,6 +196,7 @@ while i < QTY_GIFTS:
     newGift = Gift()
     allGifts.add(newGift)
     i += 1
+    print(i)
 
 
 # Create "Other Player" Sprints
