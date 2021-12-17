@@ -1,6 +1,6 @@
 #################################
 #                               #
-#   Family Chritmas Showdown!   #
+#   Family Christmas Showdown!  #
 #                               #
 #################################
 
@@ -39,12 +39,14 @@ from pygame.locals import (
     K_KP5,
     K_KP6
 )
+from pygame.sprite import collide_rect
 
 # Settings
 
 SCREEN_WIDTH = 1250
 SCREEN_HEIGHT = 700
 QTY_PLAYERS = 4
+QTY_GIFTS = 16
 
 KEY_SET_1 = {"up": K_w, "left": K_a, "down": K_s, "right": K_d}
 KEY_SET_2 = {"up": K_u, "left": K_h, "down": K_j, "right": K_k}
@@ -79,11 +81,11 @@ ZONE_4 = (
 # player sprite class
 class Player(pygame.sprite.Sprite):
 
-    def __init__(self, keyset, image, startingZone):     # TODO: need to figure out how I'm passing the arrow key and image info.  currently I'm assuming "keyset" will be a dict
+    def __init__(self, keyset, image, startingZone):
         super(Player, self).__init__()
-        self.surf = pygame.image.load(image).convert()    # TODO: each player will need a unique image. how??
+        self.surf = pygame.image.load(image).convert()
         self.surf.set_colorkey((255,255,255), RLEACCEL)
-        # place player in random location   # TODO: deal with edge case of starting in the exact same or overlapping location
+        # place player in random location within specified zone
         self.rect = self.surf.get_rect(
             center = startingZone
         )
@@ -91,6 +93,12 @@ class Player(pygame.sprite.Sprite):
         self.left = keyset["left"]
         self.down = keyset["down"]
         self.right = keyset["right"]
+
+        # list of other players
+        self.otherPlayers = pygame.sprite.Group()
+
+        # player's score
+        self.score = 0
 
     # move player based on keyset
     def update(self, pressedKeys):
@@ -102,7 +110,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.move_ip(0,5)
         if pressedKeys[self.right]:
             self.rect.move_ip(5,0)
-        # correct any moes offscreen
+        # correct any moves offscreen
         if self.rect.top <= 0:
             self.rect.top = 0
         if self.rect.left <=0:
@@ -111,13 +119,46 @@ class Player(pygame.sprite.Sprite):
             self.rect.bottom = SCREEN_HEIGHT
         if self.rect.right >= SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
-        # detect collisions?
-        battleOpponents = pygame.sprite.spritecollide(self, allPlayers,False)
-        # print("battleOpponents: ", battleOpponents.sprites())
-        # if len(battleOpponents) > 1:    # this method left a problem (see TODO below) but kinda worked
-        #     battleOpponents[1].kill()       # TODO: figure out how I wouuld just kill the one who initiated
-        # NEW TODO: just select those two sprites, so I can use them for a battle.  add them into a new group.
-        return battleOpponents
+
+        # handle collisions (kill sprite that got run into)
+        # for player in self.otherPlayers:
+        #     isFirst = True
+        #     if self.rect.colliderect(player):
+        #         if isFirst:
+        #             player.kill()
+        #             isFirst = False
+                # WHERE I LEFT OFF: I think all these are failing because in main it runs through all 4 players before deleting somehow, so that both are looped through and both get deleted
+
+        # if pygame.sprite.spritecollide(self, self.otherPlayers, True):
+        #     self.kill()
+
+        # hitList = pygame.sprite.spritecollide(self, self.otherPlayers, False)
+        # selfGroup = pygame.sprite.GroupSingle(self)
+        # hitList = pygame.sprite.groupcollide(selfGroup, self.otherPlayers, False, True)
+        # return pygame.sprite.groupcollide(selfGroup, self.otherPlayers, False, False)
+        
+# gift sprite class
+class Gift(pygame.sprite.Sprite):
+
+    def __init__(self):
+        super(Gift, self).__init__()
+        self.surf = pygame.image.load(".\images\\25gift.png").convert()
+        self.surf.set_colorkey((0,0,0), RLEACCEL)
+
+        # place gift in random location
+        self.rect = self.surf.get_rect(
+            center = (
+                random.randint(25, SCREEN_WIDTH - 25),
+                random.randint(25, SCREEN_HEIGHT - 25)
+            )
+        )
+
+        pygame.sprite.spritecollide(self, allGifts, True)        # need to get rid of any overlapping gifts
+        pygame.sprite.spritecollide(self, allPlayers, True)        # need to get rid of any overlapping gifts
+
+    def update(self):
+        # pygame.sprite.spritecollide(self, self.otherPlayers, True)        # disappear if collected by player
+        None    # TODO: fill in
 
 # Initialize
 
@@ -135,23 +176,36 @@ playerKeysets = (KEY_SET_1,KEY_SET_2, KEY_SET_3, KEY_SET_4)
 playerImages = [GILL, DOUG, JAMES, KATHLEEN, IAN, EVELYN]
 startingZones = (ZONE_1, ZONE_2, ZONE_3, ZONE_4)
 
-# Create Sprite Object
-
+# Create Sprite Objects
 allPlayers = pygame.sprite.Group()
+allGifts = pygame.sprite.Group()
 
 # Create Players
-
-# randomize images
-random.shuffle(playerImages)
+random.shuffle(playerImages)    # randomize images
 i = 0
 while i < QTY_PLAYERS:
     newPlayer = Player(playerKeysets[i],playerImages[i],startingZones[i])
     allPlayers.add(newPlayer)
     i += 1
 
+# Create Gifts
+i = 0
+while i < QTY_GIFTS:
+    newGift = Gift()
+    allGifts.add(newGift)
+    i += 1
+
+
+# Create "Other Player" Sprints
+for focusSprite in allPlayers:
+    for otherSprite in allPlayers:
+        if otherSprite != focusSprite:
+            focusSprite.otherPlayers.add(otherSprite)
+
+
 # Run Game
 
-# run until player quits
+# run until window is closed
 running = True
 while running:
     for event in pygame.event.get():
@@ -165,27 +219,40 @@ while running:
 
     # pull pressed keys from the queue
     pressedKeys = pygame.key.get_pressed()
+    allPlayers.update(pressedKeys)
 
-    # update players and get collision opponents
-    battleOpponents = allPlayers.update(pressedKeys)
+    # deal with collisions
+    # hits = pygame.sprite.groupcollide(allPlayers, allPlayers, False, False)
+    # isContinue = True
+    # for hit in hits:
+    #     if isContinue == True:
+    #         hit.kill()
+    #         isContinue = False
 
-    screen.fill((135,206, 250))     #TODO: replace with background image of snow
+    screen.fill((135,206, 250))
     screen.blit(pygame.image.load(".\images\skating-ice.jpg"), (0,0))
+
+    # load gifts
+    for sprite in allGifts:
+        screen.blit(sprite.surf, sprite.rect)
 
     # load players
     for sprite in allPlayers:
         screen.blit(sprite.surf, sprite.rect)
 
     # collision event: initiate fight
-    if battleOpponents:
-        print(battleOpponents.sprites())
+    # if battleOpponents:
+    #     print(battleOpponents.sprites())
+
+
     # battleOpponents = pygame.sprite.spritecollide()
     # if battleOpponents:
     #     print("collision detected")
     # TODO: this
 
     # end game condition: one player left
-    # TODO: this (I assume I'll just check the quantity of allPlayers?)
+    # if len(allPlayers) == 1:
+            # TODO: this (I assume I'll just check the quantity of allPlayers?)
 
     # update the window
     pygame.display.flip()
