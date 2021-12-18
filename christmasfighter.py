@@ -12,6 +12,7 @@
 
 import pygame
 import random
+import time
 from pygame.constants import RLEACCEL
 
 from pygame.locals import (
@@ -236,16 +237,22 @@ while running:
         for player in allPlayers:
             if player.score > winner.sprite.score:
                 winner.sprite = player
-        print("Winning score is: ", winner.sprite.score)
+        # print("Winning score is: ", winner.sprite.score)
         # kill non-winner sprites
         for player in allPlayers:
             if player != winner.sprite:
                 player.kill()
+        # pause for 1 second
+        # time.sleep(1)
+        # add box to screen
+        # **************************************
         # display winner in the middle (TODO: move this into class)
-        winner.sprite.rect.center(
-            SCREEN_WIDTH / 2,
-            SCREEN_HEIGHT / 2
-        )
+        winner.sprite.rect.x = SCREEN_WIDTH / 2
+        winner.sprite.rect.y = SCREEN_HEIGHT / 2
+        # winner.sprite.rect.center(      
+        #     SCREEN_WIDTH / 2,
+        #     SCREEN_HEIGHT / 2
+        # )
                 
         # TODO: make text window appear
         # TODO: make icon of winner appear
