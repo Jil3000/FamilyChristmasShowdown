@@ -1,12 +1,24 @@
-#################################
-#                               #
-#   Family Christmas Showdown!  #
-#                               #
-#################################
-
-# This is a multiplayer fighter game.  Up to 4 players.
-# Designed to showcase on Christmas 2021.
-# Chase down or avoid opponents.  Once you collide, fight.
+#####################################
+#                                   #
+#   Family Christmas Showdown!      #
+#                                   #
+#####################################
+#                                   #
+# This is a multiplayer game for 4  #
+# players.                          #
+#                                   #
+# Designed to showcase at Christmas #
+# 2021 Demo Day.                    #
+#                                   #
+#####################################
+#                                   #
+# Instructions:                     #
+#                                   #
+# Gather gifts as quickly as        #
+# possible.  The player with the    #
+# most gifts wins!                  #
+#                                   #
+#####################################
 
 # Installations
 
@@ -44,46 +56,52 @@ from pygame.sprite import collide_rect
 
 # Settings
 
-SCREEN_WIDTH = 1250
-SCREEN_HEIGHT = 700
 QTY_PLAYERS = 4
 QTY_GIFTS = 1
 
+# screen size
+SCREEN_WIDTH = 1250
+SCREEN_HEIGHT = 700
+
+# key set groupings
 KEY_SET_1 = {"up": K_w, "left": K_a, "down": K_s, "right": K_d}
 KEY_SET_2 = {"up": K_u, "left": K_h, "down": K_j, "right": K_k}
 KEY_SET_3 = {"up": K_UP, "left": K_LEFT, "down": K_DOWN, "right": K_RIGHT}
 KEY_SET_4 = {"up": K_KP8, "left": K_KP4, "down": K_KP5, "right": K_KP6}
-PLACEHOLDER_KEY_SET = {"up": K_1, "left": K_2, "down": K_3, "right": K_4}
 
+# player images
 GIFT = ".\images\\25gift.png"
 GILL = ".\images\\50Gill.jpg"
 DOUG = ".\images\\50Doug.jpg"
 JAMES = ".\images\\50James.jpg"
 KATHLEEN = ".\images\\50Kathleen.jpg"
 IAN = ".\images\\50Ian.jpg"
-JACK = ".\images\\50Jack.jpg"           # TODO: pick different image
-PLACEHOLDER = ".\images\\25notfound.jpg"
+JACK = ".\images\\50Jack.jpg"
 
 # starting zones so character don't start off overlapping or really close to each other
 ZONE_1 = (
+        # top left quadrant
         random.randint(0, SCREEN_WIDTH / 2),
         random.randint(0, SCREEN_HEIGHT / 2)
     )
 ZONE_2 = (
-        random.randint(SCREEN_WIDTH / 2, SCREEN_WIDTH),
-        random.randint(0, SCREEN_HEIGHT / 2)
-    )
-ZONE_3 = (
+        # bottom left quadrant
         random.randint(0, SCREEN_WIDTH / 2),
         random.randint(SCREEN_HEIGHT / 2, SCREEN_HEIGHT)
     )
+ZONE_3 = (
+        # top right quadrant
+        random.randint(SCREEN_WIDTH / 2, SCREEN_WIDTH),
+        random.randint(0, SCREEN_HEIGHT / 2)
+    )
 ZONE_4 = (
+        # bottom right quadrant
         random.randint(SCREEN_WIDTH / 2, SCREEN_WIDTH),
         random.randint(SCREEN_HEIGHT / 2, SCREEN_HEIGHT)
     )
-PLACEHOLDER_ZONE = (0,0)
 
-# to track whether I've enter the endgame before
+# to track whether I've already entered the endgame
+# (solves issue where scoreboard disappears)
 beforeEndGame = True
 
 # player sprite class
@@ -97,13 +115,11 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.surf.get_rect(
             center = startingZone
         )
+        # map keyset
         self.up = keyset["up"]
         self.left = keyset["left"]
         self.down = keyset["down"]
         self.right = keyset["right"]
-
-        # list of other players
-        # self.otherPlayers = pygame.sprite.Group()
 
         # player's score
         self.score = 0
@@ -128,7 +144,7 @@ class Player(pygame.sprite.Sprite):
         if self.rect.right >= SCREEN_WIDTH:
             self.rect.right = SCREEN_WIDTH
 
-        # handle once player collides with gift (ie. remove gift once collected)
+        # handle player collision with gift (remove gift once collected)
         if pygame.sprite.spritecollide(self, allGifts, True):
             self.score += 1
         
@@ -151,7 +167,23 @@ class Gift(pygame.sprite.Sprite):
         # get rid of the gift if it overlaps another gift
         pygame.sprite.spritecollide(self, allGifts, True)
 
-# Initialize
+# Functions
+
+def findHighScore(playerGroup):
+    currentHighScore = 0
+    currentHighScorer = pygame.sprite.GroupSingle()
+    for player in playerGroup:
+        # find highest scorer
+        if player.score >= currentHighScore:
+            currentHighScore = player.score
+            currentHighScorer.add(player)
+    for player in playerGroup:
+        if player == currentHighScorer.sprite:
+            playerGroup.remove(player)
+    return currentHighScorer, playerGroup
+
+
+# Initialize Pygame
 
 pygame.init()
 
@@ -161,12 +193,12 @@ screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 
 clock = pygame.time.Clock()
 
-# Define Arrow Key Sets and Images
+# Collect Arrow Key Sets, Images, Zones
 playerKeysets = (KEY_SET_1,KEY_SET_2, KEY_SET_3, KEY_SET_4)
 playerImages = [GILL, DOUG, JAMES, KATHLEEN, IAN, JACK]
 startingZones = (ZONE_1, ZONE_2, ZONE_3, ZONE_4)
 
-# Create Sprite Objects
+# Create Sprite Groups
 allPlayers = pygame.sprite.Group()
 allGifts = pygame.sprite.Group()
 
@@ -209,10 +241,9 @@ while running:
     pressedKeys = pygame.key.get_pressed()
     allPlayers.update(pressedKeys)
 
-    if beforeEndGame:
+    if beforeEndGame:   # don't run after the game has ended (overwrites scoresheet)
 
-        # create background
-        screen.fill((135,206, 250))
+        # load background
         screen.blit(pygame.image.load(".\images\skating-ice.jpg"), (0,0))
 
         # load gifts
@@ -225,64 +256,22 @@ while running:
 
     # end game condition: no gifts left
     if len(allGifts) < 1 and beforeEndGame:
-        # identify highest score (TODO: move to it's own function)
 
-        # create single sprite group for each position
+        # create single sprite group for each rank
         winner = pygame.sprite.GroupSingle()
         second = pygame.sprite.GroupSingle()
         third = pygame.sprite.GroupSingle()
         fourth = pygame.sprite.GroupSingle()
 
-        # create placeholder sprite
-        placeholderSprite = Player(PLACEHOLDER_KEY_SET,PLACEHOLDER,PLACEHOLDER_ZONE)
+        # find each rank and move player from allPlayers to rank group
+        winner, allPlayers = findHighScore(allPlayers)
+        second, allPlayers = findHighScore(allPlayers)
+        third, allPlayers = findHighScore(allPlayers)
+        fourth, allPlayers = findHighScore(allPlayers)
 
-        # add placeholder to groups
-        for player in allPlayers:
-            winner.add(placeholderSprite)
-            second.add(placeholderSprite)
-            third.add(placeholderSprite)
-            fourth.add(placeholderSprite)
+# -------------------------------------------------------------------
 
-        # highest winner
-        # find highest score and put in Winner group
-        for player in allPlayers:
-            if player.score >= winner.sprite.score:
-                winner.add(player)
-        # remove from allPlayers group
-        for player in allPlayers:
-            if player == winner.sprite:
-                allPlayers.remove(player)
-
-        # second place winner
-        # TODO: take all four of these and make a function instead
-        # find highest score and put in Winner group
-        for player in allPlayers:
-            if player.score >= second.sprite.score:
-                second.add(player)
-        # delete from allPlayers group
-        for player in allPlayers:
-            if player == second.sprite:
-                allPlayers.remove(player)
-
-        # third place winner
-        # find highest score and put in Winner group
-        for player in allPlayers:
-            if player.score >= third.sprite.score:
-                third.add(player)
-        # delete from allPlayers group
-        for player in allPlayers:
-            if player == third.sprite:
-                allPlayers.remove(player)
-
-        # fourth place winner
-        # find highest score and put in Winner group
-        for player in allPlayers:
-            if player.score >= fourth.sprite.score:
-                fourth.add(player)
-        # delete from allPlayers group
-        for player in allPlayers:
-            if player == fourth.sprite:
-                allPlayers.remove(player)
+# NEXT: unfuck the below
 
         # add box to screen
         winBox = pygame.Surface((400, 335))
