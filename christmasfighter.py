@@ -13,7 +13,7 @@
 import pygame
 import random
 import time
-from pygame.constants import RLEACCEL
+from pygame.constants import K_1, K_2, K_3, K_4, RLEACCEL
 
 from pygame.locals import (
     K_ESCAPE,
@@ -47,12 +47,13 @@ from pygame.sprite import collide_rect
 SCREEN_WIDTH = 1250
 SCREEN_HEIGHT = 700
 QTY_PLAYERS = 4
-QTY_GIFTS = 10
+QTY_GIFTS = 1
 
 KEY_SET_1 = {"up": K_w, "left": K_a, "down": K_s, "right": K_d}
 KEY_SET_2 = {"up": K_u, "left": K_h, "down": K_j, "right": K_k}
 KEY_SET_3 = {"up": K_UP, "left": K_LEFT, "down": K_DOWN, "right": K_RIGHT}
 KEY_SET_4 = {"up": K_KP8, "left": K_KP4, "down": K_KP5, "right": K_KP6}
+PLACEHOLDER_KEY_SET = {"up": K_1, "left": K_2, "down": K_3, "right": K_4}
 
 GIFT = ".\images\\25gift.png"
 GILL = ".\images\\50Gill.jpg"
@@ -61,6 +62,7 @@ JAMES = ".\images\\50James.jpg"
 KATHLEEN = ".\images\\50Kathleen.jpg"
 IAN = ".\images\\50Ian.jpg"
 JACK = ".\images\\50Jack.jpg"           # TODO: pick different image
+PLACEHOLDER = ".\images\\25notfound.jpg"
 
 # starting zones so character don't start off overlapping or really close to each other
 ZONE_1 = (
@@ -78,7 +80,11 @@ ZONE_3 = (
 ZONE_4 = (
         random.randint(SCREEN_WIDTH / 2, SCREEN_WIDTH),
         random.randint(SCREEN_HEIGHT / 2, SCREEN_HEIGHT)
-    )    
+    )
+PLACEHOLDER_ZONE = (0,0)
+
+# to track whether I've enter the endgame before
+beforeEndGame = True
 
 # player sprite class
 class Player(pygame.sprite.Sprite):
@@ -156,7 +162,6 @@ screen = pygame.display.set_mode((SCREEN_WIDTH,SCREEN_HEIGHT))
 clock = pygame.time.Clock()
 
 # Define Arrow Key Sets and Images
-
 playerKeysets = (KEY_SET_1,KEY_SET_2, KEY_SET_3, KEY_SET_4)
 playerImages = [GILL, DOUG, JAMES, KATHLEEN, IAN, JACK]
 startingZones = (ZONE_1, ZONE_2, ZONE_3, ZONE_4)
@@ -186,13 +191,6 @@ while len(allGifts) < QTY_GIFTS:
         allGifts.add(newGift)
 
 
-# Create "Other Player" Sprints
-# for focusSprite in allPlayers:
-#     for otherSprite in allPlayers:
-#         if otherSprite != focusSprite:
-#             focusSprite.otherPlayers.add(otherSprite)
-
-
 # Run Game
 
 # run until window is closed
@@ -211,55 +209,157 @@ while running:
     pressedKeys = pygame.key.get_pressed()
     allPlayers.update(pressedKeys)
 
-    screen.fill((135,206, 250))
-    screen.blit(pygame.image.load(".\images\skating-ice.jpg"), (0,0))
+    if beforeEndGame:
 
-    # load gifts
-    for sprite in allGifts:
-        screen.blit(sprite.surf, sprite.rect)
+        # create background
+        screen.fill((135,206, 250))
+        screen.blit(pygame.image.load(".\images\skating-ice.jpg"), (0,0))
 
-    # load players
-    for sprite in allPlayers:
-        screen.blit(sprite.surf, sprite.rect)
+        # load gifts
+        for sprite in allGifts:
+            screen.blit(sprite.surf, sprite.rect)
+
+        # load players
+        for sprite in allPlayers:
+            screen.blit(sprite.surf, sprite.rect)
 
     # end game condition: no gifts left
-    if len(allGifts) < 1:
+    if len(allGifts) < 1 and beforeEndGame:
         # identify highest score (TODO: move to it's own function)
-        winner = pygame.sprite.GroupSingle()
-        # temp
-        for player in allPlayers:
-            print("Score: ", player.score)
-        # highest winner
-        if not winner:
-            # put a placeholder winner in "Winner"      # TODO: make this less weird
-            for player in allPlayers:
-                winner.sprite = player
-        for player in allPlayers:
-            if player.score > winner.sprite.score:
-                winner.sprite = player
-        # print("Winning score is: ", winner.sprite.score)
-        # kill non-winner sprites
-        for player in allPlayers:
-            if player != winner.sprite:
-                player.kill()
-        # pause for 1 second
-        # time.sleep(1)
-        # add box to screen
-        # **************************************
-        # display winner in the middle (TODO: move this into class)
-        winner.sprite.rect.x = SCREEN_WIDTH / 2
-        winner.sprite.rect.y = SCREEN_HEIGHT / 2
-        # winner.sprite.rect.center(      
-        #     SCREEN_WIDTH / 2,
-        #     SCREEN_HEIGHT / 2
-        # )
-                
-        # TODO: make text window appear
-        # TODO: make icon of winner appear
-        # TODO: print all scores
-        # TODO: handle ties
-        None
 
+        # create single sprite group for each position
+        winner = pygame.sprite.GroupSingle()
+        second = pygame.sprite.GroupSingle()
+        third = pygame.sprite.GroupSingle()
+        fourth = pygame.sprite.GroupSingle()
+
+        # create placeholder sprite
+        placeholderSprite = Player(PLACEHOLDER_KEY_SET,PLACEHOLDER,PLACEHOLDER_ZONE)
+
+        # add placeholder to groups
+        for player in allPlayers:
+            winner.add(placeholderSprite)
+            second.add(placeholderSprite)
+            third.add(placeholderSprite)
+            fourth.add(placeholderSprite)
+
+        # highest winner
+        # find highest score and put in Winner group
+        for player in allPlayers:
+            if player.score >= winner.sprite.score:
+                winner.add(player)
+        # remove from allPlayers group
+        for player in allPlayers:
+            if player == winner.sprite:
+                allPlayers.remove(player)
+
+        # second place winner
+        # TODO: take all four of these and make a function instead
+        # find highest score and put in Winner group
+        for player in allPlayers:
+            if player.score >= second.sprite.score:
+                second.add(player)
+        # delete from allPlayers group
+        for player in allPlayers:
+            if player == second.sprite:
+                allPlayers.remove(player)
+
+        # third place winner
+        # find highest score and put in Winner group
+        for player in allPlayers:
+            if player.score >= third.sprite.score:
+                third.add(player)
+        # delete from allPlayers group
+        for player in allPlayers:
+            if player == third.sprite:
+                allPlayers.remove(player)
+
+        # fourth place winner
+        # find highest score and put in Winner group
+        for player in allPlayers:
+            if player.score >= fourth.sprite.score:
+                fourth.add(player)
+        # delete from allPlayers group
+        for player in allPlayers:
+            if player == fourth.sprite:
+                allPlayers.remove(player)
+
+        # add box to screen
+        winBox = pygame.Surface((400, 335))
+        winBox.fill((200,233,233))
+        winBoxRect = winBox.get_rect()
+        # make box appear
+        winBoxLocX = (SCREEN_WIDTH - winBox.get_width()) / 2
+        winBoxLocY = (SCREEN_HEIGHT - winBox.get_height()) / 2
+        screen.blit(winBox, (winBoxLocX, winBoxLocY))
+        # add smaller box
+        podiumBox = pygame.Surface((380, 75))
+        podiumBox.fill((255,255,255))
+        podiumBoxRect = podiumBox.get_rect()
+        # make smaller box appear
+        screen.blit(podiumBox, (winBoxLocX + 10, winBoxLocY + 10))
+
+        # display winner in the middle (TODO: move this into class??)
+        winner.sprite.rect.x = winBoxLocX + 25
+        winner.sprite.rect.y = winBoxLocY + 25
+        screen.blit(winner.sprite.surf, winner.sprite.rect)
+        # add text to box
+        winnerFont = pygame.font.SysFont('vivaldi', 40)
+        winnerText = winnerFont.render("Winner! Score:" + str(winner.sprite.score), True, (0,0,0))
+        winnerTextRect = winnerText.get_rect()
+        winnerTextRect.center = (winBoxLocX + 225, winBoxLocY + 50)
+        # make text appear
+        screen.blit(winnerText, winnerTextRect)
+
+        # make box to print other scores
+        loserBox = pygame.Surface((380, 230))
+        loserBox.fill((255,255,255))
+        loserBoxRect = loserBox.get_rect()
+        # make smaller box appear
+        screen.blit(loserBox, (winBoxLocX + 10, winBoxLocY + 95))
+
+        # TODO: print rest of scores on the box (move all 4 into some kind of class or function)
+        second.sprite.rect.x = winBoxLocX + 25
+        second.sprite.rect.y = winBoxLocY + 105
+        # screen.blit(second.sprite.surf, (55, 75))
+        screen.blit(second.sprite.surf, (second.sprite.rect))
+        # add text to box
+        secondFont = pygame.font.SysFont('vivaldi', 30)
+        secondText = secondFont.render("Second place.  Score: " + str(second.sprite.score), True, (0,0,0))
+        secondTextRect = secondText.get_rect()
+        secondTextRect.center = (winBoxLocX + 225, winBoxLocY + 130)
+        # make text appear
+        screen.blit(secondText, secondTextRect)
+        # TODO: handle ties
+
+                # display third place in the middle (TODO: move this into class??)
+        third.sprite.rect.x = winBoxLocX + 25
+        third.sprite.rect.y = winBoxLocY + 185
+        screen.blit(third.sprite.surf, third.sprite.rect)
+        # add text to box
+        thirdFont = pygame.font.SysFont('vivaldi', 30)
+        thirdText = thirdFont.render("Third place.  Score: " + str(third.sprite.score), True, (0,0,0))
+        thirdTextRect = thirdText.get_rect()
+        thirdTextRect.center = (winBoxLocX + 225, winBoxLocY + 210)
+        # make text appear
+        screen.blit(thirdText, thirdTextRect)
+
+                # display fourth place in the middle (TODO: move this into class??)
+        fourth.sprite.rect.x = winBoxLocX + 25
+        fourth.sprite.rect.y = winBoxLocY + 265
+        screen.blit(fourth.sprite.surf, fourth.sprite.rect)
+        # add text to box
+        fourthFont = pygame.font.SysFont('vivaldi', 30)
+        fourthText = fourthFont.render("Fourth place.  Score: " + str(fourth.sprite.score), True, (0,0,0))
+        fourthTextRect = fourthText.get_rect()
+        fourthTextRect.center = (winBoxLocX + 225, winBoxLocY + 290)
+        # make text appear
+        screen.blit(fourthText, fourthTextRect)
+
+        pygame.display.flip()
+
+        # pause         #TODO: fix so that subsequent loops don't run the win-screen related code
+        beforeEndGame = False
 
     # update the window
     pygame.display.flip()
