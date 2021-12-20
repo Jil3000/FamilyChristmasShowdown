@@ -100,6 +100,11 @@ ZONE_4 = (
         random.randint(SCREEN_HEIGHT / 2, SCREEN_HEIGHT)
     )
 
+# colours
+WHITE = (255,255,255)
+BLACK = (0,0,0)
+ICE_BLUE = (200,233,233)
+
 # to track whether I've already entered the endgame
 # (solves issue where scoreboard disappears)
 beforeEndGame = True
@@ -284,12 +289,6 @@ while running:
         '''
 
         # Endgame Layout Specs
-
-        # colours
-
-        WHITE = (255,255,255)
-        BLACK = (0,0,0)
-        ICE_BLUE = (200,233,233)
 
         # fonts
 
