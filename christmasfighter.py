@@ -283,7 +283,7 @@ while running:
         - text?
         '''
 
-        # Specs
+        # Endgame Layout Specs
 
         # colours
 
@@ -298,62 +298,60 @@ while running:
 
         # relative distances
 
+        SPRITE_SIZE = 50
         BOX_PADDING = 10
         PLAYER_PADDING = 15
         TEXT_PADDING = 30
 
-        # results box
+        # box dimensions
 
         RESULTS_BOX_WIDTH = 400
-        RESULTS_BOX_HEIGHT = 335
-                # temp note: screen width and height are 1250w x 700h
-        RESULTS_BOX_LOC_X = (SCREEN_WIDTH - RESULTS_BOX_WIDTH) / 2
-        RESULTS_BOX_LOC_Y = (SCREEN_HEIGHT - RESULTS_BOX_HEIGHT) / 2
-
-        # winner box
+        RESULTS_BOX_HEIGHT = (SPRITE_SIZE * 4) + (PLAYER_PADDING * 6) + (BOX_PADDING * 3)
 
         WINNER_BOX_WIDTH = RESULTS_BOX_WIDTH - (BOX_PADDING * 2)
-        WINNER_BOX_HEIGHT = 75
+        WINNER_BOX_HEIGHT = SPRITE_SIZE + (PLAYER_PADDING * 2)
+
+        LOSER_BOX_WIDTH = RESULTS_BOX_WIDTH - (BOX_PADDING * 2)
+        LOSER_BOX_HEIGHT = (SPRITE_SIZE * 3) + (PLAYER_PADDING * 4)
+
+        # box locations
+
+        RESULTS_BOX_LOC_X = (SCREEN_WIDTH - RESULTS_BOX_WIDTH) / 2
+        RESULTS_BOX_LOC_Y = (SCREEN_HEIGHT - RESULTS_BOX_HEIGHT) / 2
 
         WINNER_BOX_LOC_X = RESULTS_BOX_LOC_X + BOX_PADDING
         WINNER_BOX_LOC_Y = RESULTS_BOX_LOC_Y + BOX_PADDING
 
-        # winner text
-
-        WINNER_TEXT_CENTER_X = SCREEN_WIDTH / 2
-        WINNER_TEXT_CENTER_Y = WINNER_BOX_LOC_Y + TEXT_PADDING
-
-        # loser box
-
-        LOSER_BOX_WIDTH = RESULTS_BOX_WIDTH - (BOX_PADDING * 2)
-        LOSER_BOX_HEIGHT = WINNER_BOX_HEIGHT * 3
-
         LOSER_BOX_LOC_X = RESULTS_BOX_LOC_X + BOX_PADDING
         LOSER_BOX_LOC_Y = RESULTS_BOX_LOC_Y + WINNER_BOX_HEIGHT + (BOX_PADDING * 2)
 
-        # loser sprites
+        # sprite locations
+
+        WINNER_SPRITE_LOC_X = WINNER_BOX_LOC_X + PLAYER_PADDING
+        WINNER_SPRITE_LOC_Y = WINNER_BOX_LOC_Y + PLAYER_PADDING
         
         SECOND_SPRITE_LOC_X = LOSER_BOX_LOC_X + PLAYER_PADDING
         SECOND_SPRITE_LOC_Y = LOSER_BOX_LOC_Y + PLAYER_PADDING
         
-        THIRD_SPRITE_LOC_X = SECOND_SPRITE_LOC_X + (PLAYER_PADDING * 2)
-        THIRD_SPRITE_LOC_Y = SECOND_SPRITE_LOC_Y + (PLAYER_PADDING * 2)
+        THIRD_SPRITE_LOC_X = LOSER_BOX_LOC_X + PLAYER_PADDING
+        THIRD_SPRITE_LOC_Y = SECOND_SPRITE_LOC_Y + SPRITE_SIZE + PLAYER_PADDING
         
-        FOURTH_SPRITE_LOC_X = THIRD_SPRITE_LOC_X + (PLAYER_PADDING * 2)
-        FOURTH_SPRITE_LOC_Y = THIRD_SPRITE_LOC_Y + (PLAYER_PADDING * 2)
+        FOURTH_SPRITE_LOC_X = LOSER_BOX_LOC_X + PLAYER_PADDING
+        FOURTH_SPRITE_LOC_Y = THIRD_SPRITE_LOC_Y + SPRITE_SIZE + PLAYER_PADDING
+        
+        # text locations
 
-        # loser texts
+        WINNER_TEXT_CENTER_X = (SCREEN_WIDTH + SPRITE_SIZE) / 2
+        WINNER_TEXT_CENTER_Y = WINNER_BOX_LOC_Y + (WINNER_BOX_HEIGHT / 2)
 
-        SECOND_TEXT_CENTER_X = SCREEN_WIDTH / 2
-        SECOND_TEXT_CENTER_Y = WINNER_BOX_LOC_Y + (TEXT_PADDING * 2)
+        SECOND_TEXT_CENTER_X = (SCREEN_WIDTH + SPRITE_SIZE) / 2
+        SECOND_TEXT_CENTER_Y = LOSER_BOX_LOC_Y + PLAYER_PADDING + (SPRITE_SIZE / 2)
 
-        THIRD_TEXT_CENTER_X = SCREEN_WIDTH / 2
-        THIRD_TEXT_CENTER_Y = SECOND_TEXT_CENTER_Y + (TEXT_PADDING * 2)
+        THIRD_TEXT_CENTER_X = (SCREEN_WIDTH + SPRITE_SIZE) / 2
+        THIRD_TEXT_CENTER_Y = SECOND_TEXT_CENTER_Y + PLAYER_PADDING + SPRITE_SIZE
 
-        FOURTH_TEXT_CENTER_X = SCREEN_WIDTH / 2
-        FOURTH_TEXT_CENTER_Y = THIRD_TEXT_CENTER_Y + (TEXT_PADDING * 2)
-
-
+        FOURTH_TEXT_CENTER_X = (SCREEN_WIDTH + SPRITE_SIZE) / 2
+        FOURTH_TEXT_CENTER_Y = THIRD_TEXT_CENTER_Y + PLAYER_PADDING + SPRITE_SIZE
 
 
         # create results box
@@ -361,41 +359,25 @@ while running:
         resultsBoxRect = resultsBox.get_rect()
         resultsBox.fill(ICE_BLUE)
 
-        # put results box on screen
-        screen.blit(resultsBox, (RESULTS_BOX_LOC_X, RESULTS_BOX_LOC_Y))
-
-        # create box to display winner
+        # create winner box
         winnerBox = pygame.Surface((WINNER_BOX_WIDTH, WINNER_BOX_HEIGHT))
         winnerBoxRect = winnerBox.get_rect()
         winnerBox.fill(WHITE)
 
-        # put winner box on screen
-        screen.blit(winnerBox, (WINNER_BOX_LOC_X, WINNER_BOX_LOC_Y))
-
-        # add sprite to the winner box
-        winner.sprite.rect.x = WINNER_BOX_LOC_X + PLAYER_PADDING
-        winner.sprite.rect.y = WINNER_BOX_LOC_Y + PLAYER_PADDING
-
-        # add text to the winner box
-        winnerText = WINNER_FONT.render("Winner! Score:" + str(winner.sprite.score), True, BLACK)
-        winnerTextRect = winnerText.get_rect()
-        winnerTextRect.center = (WINNER_TEXT_CENTER_X, WINNER_TEXT_CENTER_Y)
-
-        # put winner sprite and text on screen
-        screen.blit(winner.sprite.surf, winner.sprite.rect)
-        screen.blit(winnerText, winnerTextRect)
-
-        # create box to display rest of players
+        # create loser box
         loserBox = pygame.Surface((LOSER_BOX_WIDTH, LOSER_BOX_HEIGHT))
         loserBoxRect = loserBox.get_rect()
         loserBox.fill(WHITE)
 
-        # put loser box on screen
+        # put boxes on screen
+        screen.blit(resultsBox, (RESULTS_BOX_LOC_X, RESULTS_BOX_LOC_Y))
+        screen.blit(winnerBox, (WINNER_BOX_LOC_X, WINNER_BOX_LOC_Y))
         screen.blit(loserBox, (LOSER_BOX_LOC_X, LOSER_BOX_LOC_Y))
 
-        # TODO: print rest of scores on the box (move all 4 into some kind of class or function)
+        # add sprites to boxes
+        winner.sprite.rect.x = WINNER_SPRITE_LOC_X
+        winner.sprite.rect.y = WINNER_SPRITE_LOC_Y
 
-        # add sprites to the loser box
         second.sprite.rect.x = SECOND_SPRITE_LOC_X
         second.sprite.rect.y = SECOND_SPRITE_LOC_Y
         
@@ -406,41 +388,34 @@ while running:
         fourth.sprite.rect.y = FOURTH_SPRITE_LOC_Y
 
         # put sprites on screen
-        screen.blit(second.sprite.surf, (second.sprite.rect))
-        screen.blit(third.sprite.surf, (third.sprite.rect))
-        screen.blit(fourth.sprite.surf, (fourth.sprite.rect))
+        screen.blit(winner.sprite.surf, winner.sprite.rect)
+        screen.blit(second.sprite.surf, second.sprite.rect)
+        screen.blit(third.sprite.surf, third.sprite.rect)
+        screen.blit(fourth.sprite.surf, fourth.sprite.rect)
 
-
-       # add text to the winner box
+        # add texts to boxes
+        
+        winnerText = WINNER_FONT.render("Winner! Score:" + str(winner.sprite.score), True, BLACK)
+        winnerTextRect = winnerText.get_rect()
         winnerTextRect.center = (WINNER_TEXT_CENTER_X, WINNER_TEXT_CENTER_Y)
 
-        # add texts to the loser box
-        secondText = LOSERS_FONT.render("Second place.  Score: " + str(second.sprite.score), True, BLACK)
+        secondText = LOSERS_FONT.render("Second place.  Score:" + str(second.sprite.score), True, BLACK)
         secondTextRect = secondText.get_rect()
         secondTextRect.center = (SECOND_TEXT_CENTER_X, SECOND_TEXT_CENTER_Y)
 
-                # display third place in the middle (TODO: move this into class??)
-        screen.blit(third.sprite.surf, third.sprite.rect)
-        # add text to box
-        thirdText = LOSERS_FONT.render("Third place.  Score: " + str(third.sprite.score), True, BLACK)
+        thirdText = LOSERS_FONT.render("Third place.  Score:" + str(third.sprite.score), True, BLACK)
         thirdTextRect = thirdText.get_rect()
         thirdTextRect.center = (THIRD_TEXT_CENTER_X, THIRD_TEXT_CENTER_Y)
 
-                # display fourth place in the middle (TODO: move this into class??)
-        screen.blit(fourth.sprite.surf, fourth.sprite.rect)
-        # add text to box
-        fourthText = LOSERS_FONT.render("Fourth place.  Score: " + str(fourth.sprite.score), True, BLACK)
+        fourthText = LOSERS_FONT.render("Fourth place.  Score:" + str(fourth.sprite.score), True, BLACK)
         fourthTextRect = fourthText.get_rect()
         fourthTextRect.center = (FOURTH_TEXT_CENTER_X, FOURTH_TEXT_CENTER_Y)
 
         # put texts on screen
+        screen.blit(winnerText, winnerTextRect)
         screen.blit(secondText, secondTextRect)
         screen.blit(thirdText, thirdTextRect)
         screen.blit(fourthText, fourthTextRect)
-
-        # TODO: handle ties
-
-        # pygame.display.flip()    # TODO: if all renders successfully, delete this line
 
     # update the window
     pygame.display.flip()
